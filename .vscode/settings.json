@@ -3,5 +3,6 @@
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit"
-  }
+  },
+  "liveServer.settings.multiRootWorkspaceName": "my_design_system"
 }
