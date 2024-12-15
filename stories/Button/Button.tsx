@@ -1,5 +1,4 @@
 import React, { useMemo } from "react";
-import "./button.css";
 import { ButtonRoleHTMLTag, ButtonType } from "../util";
 import { colors } from "../colors";
 import styled from "styled-components";
@@ -11,7 +10,7 @@ interface ButtonProps {
   openNewTab?: boolean;
   disabled?: boolean;
   variant?: "primary" | "secondary" | "tertialy";
-  size?: "default" | "medium" | "small" | "tiny" | "large";
+  size?: "default" | "large" | "medium" | "small" | "tiny";
   width?: number | string;
   height?: number | string;
   color?: string;
@@ -30,9 +29,13 @@ interface StyledButtonProps extends ButtonProps {
   width?: number | string;
   height?: number | string;
   disabled: boolean;
+  padding: string;
 }
 
-type DisabledVariantProps = Pick<ButtonProps, "disabled" | "variant">;
+type DisabledVariantProps = Pick<
+  ButtonProps,
+  "disabled" | "variant" | "textColor"
+>;
 type BorderProps = Pick<
   ButtonProps,
   "disabled" | "variant" | "borderColor" | "color"
@@ -41,8 +44,6 @@ type BorderRadiusProps = Pick<ButtonProps, "size" | "shape">;
 
 function getBgColor(props: DisabledVariantProps): string {
   const { disabled, variant } = props;
-  // console.log(disabled);
-  // console.log(variant);
 
   if (disabled && variant === "tertialy") {
     return colors.TextAndIconsColor.Default.OnsurfaceTertiary;
@@ -51,7 +52,7 @@ function getBgColor(props: DisabledVariantProps): string {
   } else if (!disabled && variant === "primary") {
     return colors.SurfaceColor.Inverse.OnsurfaceInversePrimary;
   } else if (!disabled && variant === "secondary") {
-    return colors.TextAndIconsColor.Default.OnsurfacePrimary;
+    return colors.StaticColor.StaticWhite;
   } else {
     return "transparent";
   }
@@ -59,10 +60,6 @@ function getBgColor(props: DisabledVariantProps): string {
 
 function getBorderColor(props: BorderProps): string {
   const { disabled, variant, borderColor, color } = props;
-  // console.log(disabled);
-  // console.log(variant);
-  // console.log(borderColor);
-  // console.log(color);
   if (disabled) {
     return colors.SurfaceColor.Disabled.SurfaceDisabled;
   } else if (!disabled && borderColor) {
@@ -78,8 +75,6 @@ function getBorderColor(props: BorderProps): string {
 
 function getBorderRadius(props: BorderRadiusProps): string {
   const { size, shape } = props;
-  console.log(size);
-  console.log(shape);
   if (shape === "rect") {
     return ["small", "tiny"].includes(size ?? "default") ? "4px" : "8px";
   } else {
@@ -91,10 +86,45 @@ function getTextColor(props: DisabledVariantProps): string {
   const { disabled, variant } = props;
   if (disabled) {
     return colors.TextAndIconsColor.Default.OnsurfaceTertiary;
+  } else if (props.textColor) {
+    return props.textColor;
   } else if (variant === "primary") {
-    return colors.TextAndIconsColor.Inverse.OnsurfaceInversePrimary;
-  } else {
+    return colors.StaticColor.StaticWhite;
+  } else if (variant === "tertialy") {
     return colors.TextAndIconsColor.Default.OnsurfacePrimary;
+  } else {
+    return colors.StaticColor.StaticBlack;
+  }
+}
+
+function getPaddingSize(size: string): string {
+  switch (size) {
+    case "large":
+      return "16.5px";
+    case "medium":
+      return "8px 16px";
+    case "small":
+      return "6px 12px";
+    case "tiny":
+      return "4px 10px";
+    case "default":
+    default:
+      return "10.5px 67.5px";
+  }
+}
+
+function getTextClass(size: string): string {
+  switch (size) {
+    case "default":
+      return "text-default";
+    case "medium":
+      return "text-medium";
+    case "small":
+      return "text-small";
+    case "tiny":
+      return "text-tiny";
+    default:
+      return "text-default";
   }
 }
 
@@ -111,17 +141,42 @@ const StyledButton = styled.button<StyledButtonProps>`
       : props.height || "fit-content"};
   cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
   padding: 8px 16px;
-  border: ${(props) => props.borderColor};
+  border: ${(props) => `1px solid ${props.borderColor}`};
   border-radius: ${(props) => props.borderRadius};
-
+  padding: ${(props) => props.padding};
   &:hover {
     background: ${(props) => props.hoverColor};
     box-shadow: inset 999px 999px 0px rgba(255, 255, 255, 0.2);
+  }
+  .text-default {
+    font-size: 15px;
+    line-height: 22px;
+  }
+  .text-medium {
+    font-size: 13px;
+    line-height: 20px;
+  }
+  .text-small {
+    font-size: 12px;
+    line-height: 18px;
+  }
+  .text-x-small {
+    font-size: 12px;
+    line-height: 16px;
+  }
+  .text-tiny {
+    font-size: 9px;
+    line-height: 13px;
   }
 `;
 
 const StyledText = styled.span<ButtonProps>`
   color: ${(props) => getTextColor(props)};
+  white-space: nowrap;
+  transition: color 250ms ease;
+  font-weight: 600;
+  flex: 1;
+  text-align: center;
 `;
 
 export const Button: React.FC<ButtonProps> = ({
@@ -143,9 +198,9 @@ export const Button: React.FC<ButtonProps> = ({
     if (disabled) {
       return bgColor;
     } else {
-      return props.hoverColor || bgColor || "transparent";
+      return restProps.hoverColor || bgColor || "transparent";
     }
-  }, [disabled, props.hoverColor]);
+  }, [disabled, restProps.hoverColor]);
 
   const borderColor = useMemo(() => {
     return getBorderColor({
@@ -168,6 +223,14 @@ export const Button: React.FC<ButtonProps> = ({
     [className]
   );
 
+  const padding = useMemo(() => {
+    return getPaddingSize(size);
+  }, [size]);
+
+  const textClass = useMemo(() => {
+    return getTextClass(size);
+  }, [size]);
+
   switch (as) {
     case "a":
       return (
@@ -182,17 +245,21 @@ export const Button: React.FC<ButtonProps> = ({
     case "button":
       return (
         <StyledButton
-          {...restProps}
           className={buttonClassName}
           disabled={disabled}
           color={bgColor}
           hoverColor={hoverColor}
           borderColor={borderColor}
           borderRadius={borderRadius}
-          width={props.width}
-          height={props.height}
+          width={restProps.width}
+          height={restProps.height}
+          padding={padding}
         >
-          <StyledText disabled={disabled} variant={variant}>
+          <StyledText
+            className={textClass}
+            disabled={disabled}
+            variant={variant}
+          >
             Button
           </StyledText>
         </StyledButton>
